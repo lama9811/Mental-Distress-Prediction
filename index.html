@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wellbeing — State-Level Mental Distress Forecaster</title>
+<meta name="description" content="Interactive companion to a Morgan State research poster: pick a U.S. state and forecast its frequent mental-distress prevalence from depression and financial stress." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="styles.css" />
+
+<!-- d3 + us-atlas topojson for the choropleth -->
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+</head>
+
+<body>
+
+<!-- ============ TOP BANNER (slim wine bar) ============ -->
+<div class="topbar">
+  <div class="topbar__inner">
+    <span class="kicker">Morgan State University &middot; Spring Into Research 2026</span>
+    <span class="topbar__rule"></span>
+    <a class="kicker topbar__link"
+       href="https://github.com/lama9811/Mental-Distress-Prediction" target="_blank" rel="noreferrer">
+      Source notebook ↗
+    </a>
+  </div>
+</div>
+
+<main class="page">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero reveal" style="--d:0ms">
+    <div class="hero__copy">
+      <div class="hero__eyebrow">
+        <span class="badge badge--wine">Interactive Companion</span>
+        <span class="kicker">Wellbeing &middot; v2</span>
+      </div>
+
+      <h1 class="hero__title">
+        Predicting <em>Mental&nbsp;Distress</em><br />
+        across the United States.
+      </h1>
+
+      <p class="hero__lede">
+        A state-level forecaster built from CDC PLACES prevalence data. Pick any
+        state and the model returns its predicted frequent-mental-distress rate
+        from two public indicators &mdash; depression and a composite financial-threat
+        index.
+      </p>
+
+      <ul class="hero__byline">
+        <li><span class="kicker">Authors</span>Mingma Lama &middot; Daniel Owolabi</li>
+        <li><span class="kicker">Mentor</span>Prof. Radhouane Chouchane</li>
+        <li><span class="kicker">Dept.</span>Computer Science, Morgan State University</li>
+      </ul>
+    </div>
+
+    <aside class="hero__stats">
+      <div class="bignum bignum--wine">
+        <span class="bignum__value">1<span class="bignum__suffix"> in </span>8</span>
+        <span class="kicker">U.S. adults with frequent distress</span>
+      </div>
+      <div class="bignum bignum--sage">
+        <span class="bignum__value">R²<span class="bignum__suffix"> </span>0.72</span>
+        <span class="kicker">Two-predictor model fit</span>
+      </div>
+      <div class="bignum">
+        <span class="bignum__value">±0.53</span>
+        <span class="kicker">Avg. error, percentage points</span>
+      </div>
+    </aside>
+  </header>
+
+  <!-- ============ §1  THE FORECASTER ============ -->
+  <section class="section reveal" id="forecaster" style="--d:120ms">
+
+    <div class="section__head">
+      <span class="section__num">1</span>
+      <h2 class="section__title">The Forecaster</h2>
+      <span class="section__rule"></span>
+      <span class="kicker">Pick a state to begin</span>
+    </div>
+
+    <div class="forecaster">
+
+      <!-- LEFT — state picker -->
+      <div class="forecaster__pick card card--paper">
+        <div class="kicker kicker--wine">Step 01 &middot; Select a state</div>
+
+        <span id="state-display" class="state-display" aria-hidden="true">Maryland</span>
+
+        <label for="state-select" class="visually-hidden">Choose a U.S. state</label>
+        <div class="select-wrap">
+          <select id="state-select" class="select-state" aria-describedby="state-helper">
+            <!-- options injected by app.js -->
+          </select>
+          <svg class="select-caret" viewBox="0 0 12 8" aria-hidden="true">
+            <path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p id="state-helper" class="muted small">
+          Values prefill from CDC PLACES. Nudge the inputs below to explore
+          counter-factual scenarios.
+        </p>
+
+        <div class="hardship-icons" aria-label="Financial threat components">
+          <span title="Housing insecurity">🏠</span>
+          <span title="Food insecurity">🍞</span>
+          <span title="Utility shut-off risk">⚡</span>
+          <span title="Food stamp usage">📋</span>
+        </div>
+      </div>
+
+      <!-- MIDDLE — inputs -->
+      <div class="forecaster__inputs card card--paper">
+        <div class="kicker">Step 02 &middot; Adjust inputs</div>
+
+        <div class="input-row">
+          <div class="input-row__label">
+            <span class="serif-h3">Depression</span>
+            <output id="depression-out" class="num">21.5</output>
+          </div>
+          <p class="muted small">Crude prevalence, % of adults</p>
+          <input id="depression" type="range" min="10" max="35" step="0.1" value="21.5"
+                 class="slider slider--wine" />
+          <div class="ticklabels"><span>10</span><span>35</span></div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-row__label">
+            <span class="serif-h3">Financial Threat</span>
+            <output id="financial-out" class="num">11.0</output>
+          </div>
+          <p class="muted small">Mean of 4 hardship signals, %</p>
+          <input id="financial" type="range" min="3" max="22" step="0.1" value="11.0"
+                 class="slider slider--sage" />
+          <div class="ticklabels"><span>3</span><span>22</span></div>
+        </div>
+
+        <button id="reset-state" type="button" class="link-btn">↺ Reset to CDC values for this state</button>
+      </div>
+
+      <!-- RIGHT — the prediction -->
+      <div class="forecaster__result card card--navy">
+        <div class="kicker kicker--cream">Step 03 &middot; Predicted Distress</div>
+
+        <div class="result-num">
+          <span id="prediction" class="result-num__value">15.95</span>
+          <span class="result-num__suffix">%</span>
+        </div>
+
+        <div class="result-meta">
+          <div>
+            <span class="kicker kicker--dim">CDC Actual</span>
+            <span class="num num--cream" id="actual-out">15.7</span><span class="muted-cream">%</span>
+          </div>
+          <div>
+            <span class="kicker kicker--dim">Residual</span>
+            <span class="num num--cream" id="residual-out">+0.25</span><span class="muted-cream"> pp</span>
+          </div>
+          <div>
+            <span class="kicker kicker--dim">vs. U.S. avg</span>
+            <span class="num num--cream" id="vsavg-out">−0.78</span><span class="muted-cream"> pp</span>
+          </div>
+        </div>
+
+        <p class="muted-cream small mt">
+          Equation:&nbsp;
+          <span class="mono">6.163 + 0.313 · dep + 0.277 · fin</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ §2  US CHOROPLETH ============ -->
+  <section class="section reveal" id="map-section" style="--d:0ms">
+    <div class="section__head">
+      <span class="section__num">2</span>
+      <h2 class="section__title">U.S. <em>Distress Map</em></h2>
+      <span class="section__rule"></span>
+      <span class="kicker">Click a state to forecast it</span>
+    </div>
+
+    <div class="map-card card">
+      <div id="cartogram" class="cartogram" role="img"
+           aria-label="Choropleth of the United States. Darker wine fills indicate higher predicted mental distress.">
+        <div class="cartogram__hint kicker">hover · click to select</div>
+        <div class="cartogram__tooltip" id="map-tooltip" hidden></div>
+      </div>
+
+      <div class="map-card__legend">
+        <div class="legend">
+          <span class="kicker">Predicted distress (%)</span>
+          <div class="legend__bar" aria-hidden="true"></div>
+          <div class="legend__scale">
+            <span>13.5</span><span>16.5</span><span>19.5</span><span>21+</span>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="kicker">Selected</span>
+          <span class="muted small" id="map-selected-label">Maryland — 15.95%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ §3  LEADERBOARDS ============ -->
+  <section class="section reveal" id="leaderboards" style="--d:0ms">
+    <div class="section__head">
+      <span class="section__num">3</span>
+      <h2 class="section__title">Where the <em>burden falls</em>.</h2>
+      <span class="section__rule"></span>
+    </div>
+
+    <div class="boards">
+      <div class="board card card--paper">
+        <div class="kicker kicker--wine">Highest predicted distress</div>
+        <ol id="board-high" class="board__list"></ol>
+      </div>
+      <div class="board card card--paper">
+        <div class="kicker kicker--sage">Lowest predicted distress</div>
+        <ol id="board-low" class="board__list"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ §4  MODEL CARD ============ -->
+  <section class="section reveal" id="model-card" style="--d:0ms">
+    <div class="section__head">
+      <span class="section__num">4</span>
+      <h2 class="section__title">Model card.</h2>
+      <span class="section__rule"></span>
+    </div>
+
+    <div class="modelcard">
+      <div class="modelcard__eqn">
+        <div class="kicker">Fitted equation &middot; state-level OLS</div>
+        <div class="eqn">
+          <span class="muted">distress&nbsp;=</span>
+          <span class="num--ink">6.163</span>
+          <span class="muted">+</span>
+          <span class="num--wine">0.313</span>
+          <span class="muted">·</span>
+          <span>depression</span>
+          <span class="muted">+</span>
+          <span class="num--sage">0.277</span>
+          <span class="muted">·</span>
+          <span>financial_threat</span>
+        </div>
+      </div>
+
+      <div class="modelcard__stats">
+        <div class="stat"><span class="kicker">R² (test)</span><span class="stat__v">0.722</span></div>
+        <div class="stat"><span class="kicker">RMSE</span><span class="stat__v">0.532</span></div>
+        <div class="stat"><span class="kicker">n</span><span class="stat__v">52</span></div>
+        <div class="stat"><span class="kicker">Train / Test</span><span class="stat__v">41 / 11</span></div>
+        <div class="stat"><span class="kicker">Estimator</span><span class="stat__v">OLS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ §5  IN SUMMARY (dark callout) ============ -->
+  <section class="callout reveal" style="--d:0ms">
+    <div class="callout__inner">
+      <div class="kicker kicker--cream">In Summary</div>
+      <p class="callout__text">
+        Two public indicators &mdash; depression prevalence and a composite
+        economic-stress measure &mdash; explain roughly <em>72%</em> of state-level
+        variation in mental distress, predicting within ±0.53 percentage points
+        on held-out states. A reproducible baseline built entirely on data CDC
+        already publishes.
+      </p>
+      <div class="callout__chain">
+        <span>CDC<small class="kicker">public data</small></span>
+        <span class="arrow">→</span>
+        <span>2<small class="kicker">predictors</small></span>
+        <span class="arrow">→</span>
+        <span>51<small class="kicker">state estimates</small></span>
+        <span class="arrow">→</span>
+        <span>0.53<small class="kicker">RMSE (pp)</small></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ §6  LIMITATIONS ============ -->
+  <section class="section reveal" id="limits" style="--d:0ms">
+    <div class="section__head">
+      <span class="section__num">5</span>
+      <h2 class="section__title">Read it carefully.</h2>
+      <span class="section__rule"></span>
+    </div>
+
+    <ol class="limits">
+      <li>
+        <span class="kicker kicker--wine">Small sample</span>
+        n = 52 (50 states + DC + national aggregate). Confidence intervals on
+        single-state predictions will be wide.
+      </li>
+      <li>
+        <span class="kicker kicker--wine">Cross-sectional</span>
+        Relationships are correlational, not causal.
+      </li>
+      <li>
+        <span class="kicker kicker--wine">Ecological</span>
+        State averages don't apply to individuals. Within-state variation is enormous.
+      </li>
+      <li>
+        <span class="kicker kicker--wine">Single hold-out</span>
+        No cross-validation; the generalization estimate is noisy.
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <span class="kicker">© 2026 &middot; Lama · Owolabi · Chouchane &middot; Morgan State University</span>
+    <span class="footer__sources">
+      Data
+      <a href="https://chronicdata.cdc.gov/500-Cities-Places/PLACES-Local-Data-for-Better-Health-County-Data-20/swc5-untb"
+         target="_blank" rel="noreferrer">CDC PLACES ↗</a>
+      &middot;
+      Code
+      <a href="https://github.com/lama9811/Mental-Distress-Prediction"
+         target="_blank" rel="noreferrer">GitHub ↗</a>
+    </span>
+  </footer>
+
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
