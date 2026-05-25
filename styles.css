@@ -172,18 +172,25 @@ a { color: inherit; text-underline-offset: 3px; }
 
 .hero__eyebrow {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
-.badge {
+.wordmark {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--f-serif);
+  font-weight: 500;
+  font-style: italic;
+  font-size: 1.45rem;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  line-height: 1;
+}
+.wordmark__dot {
   display: inline-block;
-  font-family: var(--f-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  padding: 5px 10px;
-  border-radius: 2px;
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: var(--wine);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wine) 22%, transparent);
 }
-.badge--wine { background: var(--wine); color: var(--cream); }
 
 .hero__title {
   font-family: var(--f-serif);
