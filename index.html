@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Wellbeing — State-Level Mental Distress Forecaster</title>
-<meta name="description" content="Interactive companion to a Morgan State research poster: pick a U.S. state and forecast its frequent mental-distress prevalence from depression and financial stress." />
+<title>Wellbeing — Mental Distress Forecaster</title>
+<meta name="description" content="Interactive companion to a Morgan State research project: explore state- and county-level frequent mental-distress predictions from depression and financial hardship." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,14 +50,13 @@
       </h1>
 
       <p class="hero__lede">
-        A state-level forecaster built from CDC PLACES prevalence data. Pick any
-        state and the model returns its predicted frequent-mental-distress rate
-        from two public indicators &mdash; depression and a composite financial-threat
-        index.
+        A state-level forecaster built from CDC PLACES prevalence data, now with
+        a county-level research extension. Explore how depression and a composite
+        financial-hardship measure relate to frequent mental distress.
       </p>
 
       <ul class="hero__byline">
-        <li><span class="kicker">Authors</span>Mingma Lama &middot; Daniel Owolabi</li>
+        <li><span class="kicker">Authors</span>Mingma Lama &middot; Aditya Poudel &middot; Daniel Owolabi</li>
         <li><span class="kicker">Mentor</span>Prof. Radhouane Chouchane</li>
         <li><span class="kicker">Dept.</span>Computer Science, Morgan State University</li>
       </ul>
@@ -86,14 +85,23 @@
       <span class="section__num">1</span>
       <h2 class="section__title">The Forecaster</h2>
       <span class="section__rule"></span>
-      <span class="kicker">Pick a state to begin</span>
+      <span class="kicker" id="forecaster-scope-label">Pick a state to begin</span>
+    </div>
+
+    <div class="view-switcher" aria-label="Choose analysis level">
+      <span class="kicker">Analysis level</span>
+      <div class="segmented" role="group" aria-label="State or county analysis">
+        <button type="button" class="segmented__button is-active" data-mode="state" aria-pressed="true">State</button>
+        <button type="button" class="segmented__button" data-mode="county" aria-pressed="false">County</button>
+      </div>
+      <span class="muted small" id="mode-note">Original state-level poster model</span>
     </div>
 
     <div class="forecaster">
 
       <!-- LEFT — state picker -->
       <div class="forecaster__pick card card--paper">
-        <div class="kicker kicker--wine">Step 01 &middot; Select a state</div>
+        <div class="kicker kicker--wine" id="picker-step">Step 01 &middot; Select a state</div>
 
         <span id="state-display" class="state-display" aria-hidden="true">Maryland</span>
 
@@ -105,6 +113,15 @@
           <svg class="select-caret" viewBox="0 0 12 8" aria-hidden="true">
             <path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+        </div>
+        <div id="county-picker" class="county-picker" hidden>
+          <label for="county-select" class="kicker">County</label>
+          <div class="select-wrap">
+            <select id="county-select" class="select-state" aria-describedby="county-helper"></select>
+            <svg class="select-caret" viewBox="0 0 12 8" aria-hidden="true">
+              <path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
         </div>
         <p id="state-helper" class="muted small">
           Values prefill from CDC PLACES. Nudge the inputs below to explore
@@ -129,7 +146,7 @@
             <output id="depression-out" class="num">21.5</output>
           </div>
           <p class="muted small">Crude prevalence, % of adults</p>
-          <input id="depression" type="range" min="10" max="35" step="0.1" value="21.5"
+          <input id="depression" type="range" min="10" max="35" step="0.001" value="21.5"
                  class="slider slider--wine" />
           <div class="ticklabels"><span>10</span><span>35</span></div>
         </div>
@@ -140,9 +157,9 @@
             <output id="financial-out" class="num">11.0</output>
           </div>
           <p class="muted small">Mean of 4 hardship signals, %</p>
-          <input id="financial" type="range" min="3" max="22" step="0.1" value="11.0"
+          <input id="financial" type="range" min="3" max="22" step="0.001" value="11.0"
                  class="slider slider--sage" />
-          <div class="ticklabels"><span>3</span><span>22</span></div>
+          <div class="ticklabels"><span>3</span><span id="financial-max">22</span></div>
         </div>
 
         <button id="reset-state" type="button" class="link-btn">↺ Reset to CDC values for this state</button>
@@ -174,7 +191,7 @@
 
         <p class="muted-cream small mt">
           Equation:&nbsp;
-          <span class="mono">6.163 + 0.313 · dep + 0.277 · fin</span>
+          <span class="mono" id="result-equation">6.163 + 0.313 · dep + 0.277 · fin</span>
         </p>
       </div>
     </div>
@@ -186,7 +203,18 @@
       <span class="section__num">2</span>
       <h2 class="section__title">U.S. <em>Distress Map</em></h2>
       <span class="section__rule"></span>
-      <span class="kicker">Click a state to forecast it</span>
+      <span class="kicker" id="map-mode-label">Click a state to forecast it</span>
+    </div>
+
+    <div class="map-view-switcher" aria-label="Choose map detail level">
+      <div>
+        <span class="kicker">Map view</span>
+        <span class="muted small" id="map-coverage-note">All states use the original state-level estimates.</span>
+      </div>
+      <div class="segmented" role="group" aria-label="State or county map">
+        <button type="button" class="segmented__button is-active" data-mode="state" aria-pressed="true">State view</button>
+        <button type="button" class="segmented__button" data-mode="county" aria-pressed="false">County view</button>
+      </div>
     </div>
 
     <div class="map-card card">
@@ -218,15 +246,16 @@
       <span class="section__num">3</span>
       <h2 class="section__title">Where the <em>burden falls</em>.</h2>
       <span class="section__rule"></span>
+      <span class="kicker" id="burden-scope-label">State-level ranking</span>
     </div>
 
     <div class="boards">
       <div class="board card card--paper">
-        <div class="kicker kicker--wine">Highest predicted distress</div>
+        <div class="kicker kicker--wine" id="board-high-title">Highest predicted state distress</div>
         <ol id="board-high" class="board__list"></ol>
       </div>
       <div class="board card card--paper">
-        <div class="kicker kicker--sage">Lowest predicted distress</div>
+        <div class="kicker kicker--sage" id="board-low-title">Lowest predicted state distress</div>
         <ol id="board-low" class="board__list"></ol>
       </div>
     </div>
@@ -263,6 +292,23 @@
         <div class="stat"><span class="kicker">n</span><span class="stat__v">52</span></div>
         <div class="stat"><span class="kicker">Train / Test</span><span class="stat__v">41 / 11</span></div>
         <div class="stat"><span class="kicker">Estimator</span><span class="stat__v">OLS</span></div>
+      </div>
+    </div>
+
+    <div class="county-extension card card--paper">
+      <div>
+        <span class="kicker kicker--sage">County extension &middot; secondary analysis</span>
+        <p class="county-extension__copy">
+          A complete-case county model uses the same CDC PLACES 2025 county file
+          as the notebook. It adds county selection without replacing the original
+          state-level poster result.
+        </p>
+      </div>
+      <div class="county-extension__metrics">
+        <span><strong>2,299</strong><small>counties</small></span>
+        <span><strong>0.790</strong><small>leave-state-out R²</small></span>
+        <span><strong>0.908</strong><small>RMSE (pp)</small></span>
+        <span class="mono">5.271 + 0.364 · dep + 0.276 · hardship</span>
       </div>
     </div>
   </section>
@@ -316,12 +362,19 @@
         <span class="kicker kicker--wine">Single hold-out</span>
         No cross-validation; the generalization estimate is noisy.
       </li>
+            <li>
+              <span class="kicker kicker--wine">County coverage</span>
+              The county extension is a complete-case analysis of 2,299 counties in
+              39 states and DC. In County view, jurisdictions without all four
+              hardship measures use the original whole-state estimate; no missing
+              county values are imputed.
+            </li>
     </ol>
   </section>
 
   <!-- ============ FOOTER ============ -->
   <footer class="footer">
-    <span class="kicker">© 2026 &middot; Lama · Owolabi · Chouchane &middot; Morgan State University</span>
+    <span class="kicker">© 2026 &middot; Lama · Poudel · Owolabi · Chouchane &middot; Morgan State University</span>
     <span class="footer__sources">
       Data
       <a href="https://chronicdata.cdc.gov/500-Cities-Places/PLACES-Local-Data-for-Better-Health-County-Data-20/swc5-untb"
@@ -336,7 +389,8 @@
 </main>
 
 <script src="data.js"></script>
-<script src="app.js"></script>
+<script src="county-data.js"></script>
+<script src="app.js?v=county-state-fallbacks"></script>
 
 </body>
 </html>

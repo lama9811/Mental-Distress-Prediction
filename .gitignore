@@ -9,3 +9,9 @@
 .playwright-mcp/
 node_modules/
 *.log
+
+data/*.csv
+outputs/tables/county_predictions.csv
+
+.ipynb_checkpoints/
+anaconda_projects/

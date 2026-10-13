@@ -1,17 +1,31 @@
 # Wellbeing — Mental Distress Prediction Dashboard
 
 An interactive companion to *Predicting Mental Distress Using Depression and
-Financial Stress Among Adults in the United States* (Lama, Owolabi, Chouchane —
+Financial Stress Among Adults in the United States* (Lama, Poudel, Owolabi, Chouchane —
 Morgan State University, Spring into Research Week 2026).
 
-The dashboard runs the state-level linear regression from `Health.ipynb`
-**entirely in the browser** — no Python, no server, no build step.
+The dashboard keeps the state-level regression from `Health.ipynb` as its
+default experience and adds the county analysis as a secondary view. Both run
+**entirely in the browser** after the county bundle has been generated.
 
 ```
 distress = 6.163 + 0.313 · depression + 0.277 · financial_threat
 ```
 
 (state-level OLS, n = 52, R² = 0.722, RMSE = 0.532)
+
+The County toggle uses the complete-case model from
+`notebooks/county_wise_analysis.ipynb`:
+
+```
+distress = 5.271 + 0.364 · depression + 0.276 · financial_hardship
+```
+
+(county-level OLS, n = 2,299, cross-validated R² = 0.790, RMSE = 0.908)
+
+The state and county analyses come from the same CDC PLACES County Data 2025
+release. The county build deliberately uses the notebook's six measures,
+crude-prevalence filter, financial-hardship formula, and complete-case rules.
 
 ---
 
@@ -32,8 +46,9 @@ python3 -m http.server 8000
 
 ## Deploy to GitHub Pages
 
-1. Commit `index.html`, `app.js`, `styles.css`, and `README.md` to your
-   `Mental-Distress-Prediction` repo (or a dedicated dashboard branch).
+1. Commit `index.html`, `app.js`, `styles.css`, `data.js`, and
+   `county-data.js` to your `Mental-Distress-Prediction` repo (or a dedicated
+   dashboard branch).
 2. On GitHub: **Settings → Pages → Build and deployment → Branch: `main` / `/ (root)`**.
 3. Visit `https://lama9811.github.io/Mental-Distress-Prediction/`.
 
@@ -47,18 +62,34 @@ Google Fonts directly.
 | File         | Role                                                              |
 |--------------|-------------------------------------------------------------------|
 | `index.html` | Markup, Tailwind config, custom theme tokens, font imports.       |
-| `app.js`     | Locked model coefficients, slider handlers, SVG scatter chart.    |
+| `app.js`     | State/county controls, locked model coefficients, and SVG maps.    |
+| `data.js`    | Existing state-level observations.                                |
+| `county-data.js` | Generated county observations used by the dashboard.        |
+| `scripts/build_county_data.py` | Rebuilds `county-data.js` from the CDC CSV. |
 | `styles.css` | Range-slider styling, paper-grain texture, entrance animations.   |
-| `README.md`  | You are here.                                                     |
+| `DASHBOARD.md` | You are here.                                                   |
 
 ---
 
 ## Updating the model
 
-Edit `MODEL` at the top of `app.js`:
+The two locked models live in `MODELS` at the top of `app.js`. The county
+coefficients are copied at full precision from the county notebook.
+
+To regenerate county dashboard data after rerunning or replacing the CDC file:
+
+```bash
+python scripts/build_county_data.py
+```
+
+The script expects `data/places_county_2025.csv`. That large source file stays
+ignored by Git; the compact generated `county-data.js` is committed so the
+static dashboard does not need a database or a 51 MB download at runtime.
+
+The state model is:
 
 ```js
-const MODEL = Object.freeze({
+state: Object.freeze({
   intercept: 6.162857696868079,
   depCoef:   0.31342386,
   finCoef:   0.27670656,
@@ -78,6 +109,6 @@ The 11 hold-out test points in `TEST_SET` come from the same cell's
 
 - **Data:** CDC PLACES — *Local Data for Better Health, County Data,
   2025 release.*
-- **Model & notebook:** Mingma Lama, Daniel Owolabi.
+- **Model & notebooks:** Mingma Lama, Aditya Poudel, Daniel Owolabi.
 - **Mentorship:** Prof. Radhouane Chouchane, Dept. of Computer Science,
   Morgan State University.

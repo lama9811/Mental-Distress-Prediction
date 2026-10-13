@@ -1,0 +1,4 @@
+Model,mean_state_RMSE,median_state_RMSE,mean_state_MAE,median_state_MAE
+Combined,0.917874,0.846434,0.790944,0.664572
+Financial hardship only,1.491660,1.329820,1.276732,1.072948
+Depression only,1.521229,1.500489,1.287395,1.207644

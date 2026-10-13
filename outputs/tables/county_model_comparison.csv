@@ -1,0 +1,4 @@
+Model,Predictors,R2,RMSE,MAE
+Combined,"depression, financial_hardship",0.789676,0.908345,0.733993
+Financial hardship only,financial_hardship,0.431954,1.492790,1.156475
+Depression only,depression,0.349987,1.596864,1.240293

@@ -1,0 +1,4 @@
+term,coefficient,clustered_standard_error,p_value,ci_lower_95,ci_upper_95
+const,5.270755,0.717441,0.000000,3.864596,6.676914
+depression,0.363790,0.029138,0.000000,0.306682,0.420899
+financial_hardship,0.276276,0.020337,0.000000,0.236415,0.316137

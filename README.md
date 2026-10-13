@@ -10,6 +10,7 @@ A state-level regression study testing whether **depression rates** and a compos
 ## Authors
 
 - **Mingma Lama**
+- **Aditya Poudel** — county-level analysis and dashboard extension
 - Daniel Owolabi
 - **Prof. Radhouane Chouchane** (faculty mentor)
 
@@ -170,4 +171,4 @@ This research was conducted under the mentorship of **Prof. Radhouane Chouchane*
 
 If you reference this work, please cite:
 
-> Lama, M., Owolabi, D., & Chouchane, R. (2026). *Predicting Mental Distress Using Depression and Financial Stress Among Adults in the United States.* Poster, 31st Annual Undergraduate & Graduate Research Symposium, Morgan State University, Baltimore, MD.
+> Lama, M., Poudel, A., Owolabi, D., & Chouchane, R. (2026). *Predicting Mental Distress Using Depression and Financial Stress Among Adults in the United States.* Poster, 31st Annual Undergraduate & Graduate Research Symposium, Morgan State University, Baltimore, MD.
